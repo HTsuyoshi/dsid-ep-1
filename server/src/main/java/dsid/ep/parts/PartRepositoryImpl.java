@@ -26,8 +26,8 @@ public class PartRepositoryImpl extends UnicastRemoteObject implements PartRepos
      * uma JList no lado do Cliente
      */
     @Override
-    public Vector<PartImpl> getPartList() throws RemoteException {
-        Vector<PartImpl> list = new Vector<>();
+    public Vector<Part> getPartList() throws RemoteException {
+        Vector<Part> list = new Vector<>();
         list.addAll(partList.values());
         return list;
     }
@@ -56,5 +56,11 @@ public class PartRepositoryImpl extends UnicastRemoteObject implements PartRepos
     public void addPart(UUID code, int quantity, String name, String description) throws RemoteException {
         PartImpl part = new PartImpl(code, name, description);
         partList.put(code, part);
+    }
+
+    @Override
+    public void addSubCompPart(UUID receive, UUID code, int quantity, String name, String description) throws RemoteException {
+        Part receivePart = partList.get(receive);
+        receivePart.addSubCompPart(code, name, quantity, description);
     }
 }

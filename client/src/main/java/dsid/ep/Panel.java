@@ -26,12 +26,19 @@ import java.util.Vector;
 
 /**
  * Fields: uma classe contendo todos os campos que serao usados para pegar alguma informacao do usuario
- *  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ AARUMA
- * @attr currentName: o nome do servidor
- * @attr currentStatus: guarda o status do servidor (UP ou DOWN)
- * @attr ipField: recebe o ip do servidor que vai ser conectar
- * @attr nameField: recebe o nome do servidor que vai ser conectar
- * @attr portField: recebe a porta do servidor que vai ser conectar
+ *
+ * @attr currentPartCode: Recebe o ID da Part
+ * @attr currentPartName: Recebe o nome da Part
+ * @attr currentPartQuantity: Recebe a quantitade de Parts
+ * @attr currentPartDescription: Recebe a descricao da Part
+ * @attr subComponentList: Usado para Mostrar uma lista de subParts
+ * @attr currentName: O nome do servidor
+ * @attr currentStatus: Guarda o status do servidor (UP ou DOWN)
+ * @attr ipField: Recebe o ip do servidor que vai ser conectar
+ * @attr nameField: Recebe o nome do servidor que vai ser conectar
+ * @attr portField: Recebe a porta do servidor que vai ser conectar
+ * @attr partList; Usado para Mostrar as Parts disponiveis no servidor
+ * @attr searchField; Recebe um ID para o usuario receber alguma parte do servidor
  */
 class Fields extends JPanel {
     static protected JTextField currentPartCode;
@@ -45,7 +52,6 @@ class Fields extends JPanel {
     static protected JTextField nameField;
     static protected JTextField portField;
     static protected JList partList;
-    static protected JPanel menu;
     static protected JTextField searchField;
 }
 
@@ -63,7 +69,6 @@ public class Panel extends Fields {
 
     public Panel() {
         this.currentSubPartList = new Vector<>();
-        this.currentPart = null; //new PartImpl(UUID.randomUUID(), "None", "None");
     }
 
     /**
@@ -89,12 +94,87 @@ public class Panel extends Fields {
      * @param description: Descricao da parte que vai ser adicionada no repositorio
      * @param quantity: Quantidade de Parts que vao ser adicionadas no repositorio
      */
-    boolean addp(String code, String name, String description, int quantity) {
+    boolean addp(String code, String name, String description, int quantity, Vector<Map.Entry<Part, Integer>> subComp) {
         try {
             currentPartRepository.addPart(UUID.fromString(code), quantity, name, description);
+            for (Map.Entry<Part, Integer> e : subComp) {
+                currentPartRepository.addSubCompPart(UUID.fromString(code), e.getKey().getCode(), e.getValue(), e.getKey().getName(), e.getKey().getDescription());
+            }
         } catch (Exception ex) {
             ex.printStackTrace(); return false; }
         return true;
+    }
+
+    /**
+     * listp: Vai pegar a lista disponivel de pecas no servidor
+     */
+    void listp() {
+        try {
+            partList.setListData(currentPartRepository.getPartList());
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
+     * getp: Vai pegar uma peca do repositorio e passar as informacoes dela para o usuario
+     *
+     * @param partCode: O codigo da peca que vai ser recuperada
+     */
+    void getp(String partCode) {
+        Part repoPart;
+
+        try {
+            repoPart = currentPartRepository.getPart(UUID.fromString(partCode));
+        } catch(Exception ex) {
+            ex.printStackTrace();
+            return;
+        }
+
+        currentPartCode.setText(repoPart.getCode().toString());
+        currentPartName.setText(repoPart.getName());
+        currentPartQuantity.setText("0");
+        currentPartDescription.setText(repoPart.getDescription());
+        subComponentList.setListData(currentSubPartList);
+        currentPart = repoPart;
+    }
+
+    /**
+     * showp: Mostra as informacoes da referencia da peca atual
+     */
+    void showp() {
+        currentPartCode.setText(currentPart.getCode().toString());
+        currentPartName.setText(currentPart.getName());
+        currentPartQuantity.setText("0");
+        currentPartDescription.setText(currentPart.getDescription());
+        subComponentList.setListData(currentSubPartList);
+    }
+
+    /**
+     * gencode: Gera um novo identificador unico
+     */
+    void gencode() {
+        UUID newCode = UUID.randomUUID();
+        currentPartCode.setText(newCode.toString());
+        currentPart.setCode(newCode);
+    }
+
+    /**
+     * addsubpart: Adicionar uma nova subpart na lista de subpartes atual
+     *
+     * @param quantity: a quantidade de pecas que vao ser adicionadas
+     */
+    void addsubpart(int quantity) {
+        currentSubPartList.add(new AbstractMap.SimpleEntry<>(currentPart, quantity));
+        subComponentList.setListData(currentSubPartList);
+    }
+
+    /**
+     * clearlist: limpa a lista de subpecas atual
+     */
+    void clearlist() {
+        this.currentSubPartList = new Vector<>();
+        subComponentList.setListData(new Vector<>());
     }
 
     /**
@@ -131,7 +211,7 @@ class ConnectPanel extends Panel {
         c.gridy = 6;
 
         /**
-         * O evendo do botao connectt vai:
+         * O evento do botao connectt vai:
          * 1. Verificar se os campos currentIp e currentPort estao preenchidos
          * 2. Tentar criar uma conexao com o server
          *  2.1 Se conseguir se conectar vai mostrar as informacoes do server e mostrar UP para o usuario
@@ -206,11 +286,10 @@ class ConnectPanel extends Panel {
 /**
  * ShowPanel: classe que herda os atributos da classe Panel e mostra as informacoes necessarias para pesquisar as pecas dentro do servidor
  *
- * partList: mostra as pecas que foram retornadas do servidor
  * menu: janela que define o layout que vai ser mostrado para o usuario
- * searchField: usado para o usuario procurar por uma peca baseada no seu UUID
  */
 class ShowPanel extends Panel {
+    private JPanel menu;
 
     public ShowPanel() {
         setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
@@ -222,16 +301,22 @@ class ShowPanel extends Panel {
 
     public void setButtons(JPanel menu) {
 
+        /**
+         * O evento do botao listp vai:
+         * 1. Recuperar uma lista com as Parts do servidor
+         * 2. Mostrar para o usuario
+         */
         JButton list = new JButton("listp");
         list.addActionListener(e -> {
-            try {
-                partList.setListData(currentPartRepository.getPartList());
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
+            listp();
         });
         menu.add(list);
 
+        /**
+         * O evento do botao getp vai:
+         * 1. Verificar se os campos foram preenchidos corretamente
+         * 2. Recuperar a peca especificada pelo UUID e mostrar para o usuario
+         */
         JButton get = new JButton("getp");
         get.addActionListener(e -> {
             String partCode;
@@ -248,21 +333,7 @@ class ShowPanel extends Panel {
                 }
             }
 
-            Part repoPart;
-
-            try {
-                repoPart = currentPartRepository.getPart(UUID.fromString(partCode));
-            } catch(Exception ex) {
-                ex.printStackTrace();
-                return;
-            }
-
-            currentPartCode.setText(repoPart.getCode().toString());
-            currentPartName.setText(repoPart.getName());
-            currentPartQuantity.setText("0");
-            currentPartDescription.setText(repoPart.getDescription());
-            subComponentList.setListData(currentSubPartList);
-            currentPart = repoPart;
+            getp(partCode);
         });
         menu.add(get);
     }
@@ -286,8 +357,8 @@ class ShowPanel extends Panel {
     }
 }
 
-/*
- * PartCellRenderer: usado para representar as informacoes de uma instancia Part dentro de uma JList
+/**
+ * PartCellRenderer: usado para representar as informacoes de uma instancia de Part dentro de uma JList
  */
 
 class PartCellRenderer extends DefaultListCellRenderer {
@@ -306,14 +377,8 @@ class PartCellRenderer extends DefaultListCellRenderer {
     }
 }
 
-/*
+/**
  * InfoPanel: mostra as informacoes sobre uma determinada peca, como: nome, UUID, descricao, lista de subcomponentes
- *
- * currentPartCode: receber/mostrar o codigo de uma peca
- * currentPartName: receber/mostrar o nome de uma peca
- * currentPartQuantity: receber/mostrar a quantidade de pecas
- * currentPartDescription: receber/mostrar a descricao de uma peca
- * subComponentList: receber/mostrar uma lista de subcomponentes
  */
 
 class InfoPanel extends Panel {
@@ -328,35 +393,48 @@ class InfoPanel extends Panel {
     public void setButtons(GridBagConstraints c) {
         c.gridheight = 1;
 
-        JButton genCode = new JButton("gen code");
+        /**
+         * O evento do botao gencode gerar um novo UUID
+         */
+        JButton genCode = new JButton("gencode");
         genCode.addActionListener(e -> {
-            UUID newCode = UUID.randomUUID();
-            currentPartCode.setText(newCode.toString());
-            currentPart.setCode(newCode);
+            gencode();
         });
 
+        /**
+         * O evento do botao clearlist limpar a lista de subPart atual
+         */
         JButton clear = new JButton("clearlist");
         clear.addActionListener(e -> {
-            this.currentSubPartList = new Vector<>();
-            subComponentList.setListData(new Vector<>());
+            clearlist();
         });
 
+        /**
+         * O evento do botao addsubpart vai:
+         * 1. Verificar se o campo Quantity foi preenchido
+         * 1.1 Se tiver sido preenchido vai adicionar a subPart no repositorio
+         */
         c.gridy = 5;
         JButton addSubPart = new JButton("addsubpart");
         addSubPart.addActionListener(e -> {
-            int quantityInt;
+            int quantity;
 
             try {
-                quantityInt = Integer.parseInt(currentPartQuantity.getText());
+                quantity = Integer.parseInt(currentPartQuantity.getText());
             } catch (NumberFormatException ex) {
                 System.err.println("addsubpart: Isso nao e um numero");
                 return;
             }
 
-            currentSubPartList.add(new AbstractMap.SimpleEntry<>(currentPart, quantityInt));
-            subComponentList.setListData(currentSubPartList);
+            addsubpart(quantity);
         });
 
+        /**
+         * O evento do botao addp vai:
+         * 1. Verificar os campos Quantidade, Nome, Codigo, Descricao
+         * 2. Caso exista uma parte selecionada vai colocar as informacoes na parte atual
+         * 3. Vai enviar para o servidor as informacoes de uma Part para ela ser implementada
+         */
         JButton addPart = new JButton("addp");
         addPart.addActionListener(e -> {
 
@@ -375,24 +453,28 @@ class InfoPanel extends Panel {
                 return;
             }
 
-            currentPart.setCode(UUID.fromString(currentPartCode.getText()));
-            currentPart.setName(currentPartName.getText().trim());
-            currentPart.setDescription(currentPartDescription.getText().trim());
+            if (currentPart != null) {
+                currentPart.setCode(UUID.fromString(currentPartCode.getText()));
+                currentPart.setName(currentPartName.getText().trim());
+                currentPart.setDescription(currentPartDescription.getText().trim());
+            }
+
             addp(currentPartCode.getText(),
                      currentPartName.getText().trim(),
                     currentPartDescription.getText().trim(),
-                    quantityInt);
+                    quantityInt,
+                    currentSubPartList);
         });
 
-        // TODO: show part attributes
-        // TODO: Test shot part attributes
+        /**
+         * O evento do botao show vai:
+         * 1. Verificar se existe uma parte selecionada
+         * 1.1 Se existir vai exibir as informacoes dessa Part
+         */
         JButton show = new JButton("showp");
         show.addActionListener(e -> {
-            currentPartCode.setText(currentPart.getCode().toString());
-            currentPartName.setText(currentPart.getName());
-            currentPartQuantity.setText("0");
-            currentPartDescription.setText(currentPart.getDescription());
-            subComponentList.setListData(currentSubPartList);
+            if (currentPart == null) return;
+            showp();
         });
 
         addToGridBagConstraint(genCode, 0, 0, c);
@@ -430,8 +512,8 @@ class InfoPanel extends Panel {
     }
 }
 
-/*
- * SubComponentCellRenderer: representar as informacoes de uma subpart dentro de uma peca em uma JList
+/**
+ * SubComponentCellRenderer: representar as informacoes de uma subPart dentro de uma peca em uma JList
  */
 
 class SubComponentCellRenderer extends DefaultListCellRenderer {

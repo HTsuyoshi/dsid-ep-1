@@ -1,6 +1,5 @@
 package dsid.ep.parts;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -14,7 +13,7 @@ import java.util.Vector;
  * @attr description: A descricao de uma Part
  * @attr subParts: Uma lista contendo todas as Part que compoem essa Part
  */
-public class PartImpl implements Part, Serializable {
+public class PartImpl implements Part {
 
     private UUID code;
     private String name;
