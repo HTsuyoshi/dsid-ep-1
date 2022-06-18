@@ -13,6 +13,8 @@ public interface PartRepository extends Remote {
 
     Part getPart(UUID code) throws RemoteException;
 
+    void addPart(Part part) throws RemoteException;
+
     void addPart(UUID code, int quantity, String name, String description) throws RemoteException;
 
     void addSubCompPart(UUID receive, UUID code, int quantity, String name, String description) throws RemoteException;

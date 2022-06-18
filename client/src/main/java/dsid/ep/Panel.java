@@ -1,6 +1,7 @@
 package dsid.ep;
 
 import dsid.ep.parts.Part;
+import dsid.ep.parts.PartImpl;
 import dsid.ep.parts.PartRepository;
 
 import javax.swing.BorderFactory;
@@ -87,7 +88,8 @@ public class Panel extends Fields {
     }
 
     /**
-     * addp: Adiciona uma Part no repositorio atualmente conectado
+     * addp: Adiciona uma Part no repositorio atualmente conectado. Mas se a parte que ele for adicionar for uma
+     * referencia que ele tem armazenado, ele vai adicionar a referencia
      *
      * @param code: Usado para gerar um UUID e ser colocado no repositorio
      * @param name: Nome da parte que vai ser adicionada no repositorio
@@ -95,7 +97,20 @@ public class Panel extends Fields {
      * @param quantity: Quantidade de Parts que vao ser adicionadas no repositorio
      */
     boolean addp(String code, String name, String description, int quantity, Vector<Map.Entry<Part, Integer>> subComp) {
+
         try {
+            if (currentPart != null) {
+                if (currentPart.getCode().toString().equals(code)) {
+                    currentPart.setName(name);
+                    currentPart.setDescription(description);
+                    currentPartRepository.addPart(currentPart);
+                    for (Map.Entry<Part, Integer> e : subComp) {
+                        currentPartRepository.addSubCompPart(UUID.fromString(code), e.getKey().getCode(), e.getValue(), e.getKey().getName(), e.getKey().getDescription());
+                    }
+                    return true;
+                }
+            }
+
             currentPartRepository.addPart(UUID.fromString(code), quantity, name, description);
             for (Map.Entry<Part, Integer> e : subComp) {
                 currentPartRepository.addSubCompPart(UUID.fromString(code), e.getKey().getCode(), e.getValue(), e.getKey().getName(), e.getKey().getDescription());
@@ -135,7 +150,7 @@ public class Panel extends Fields {
         currentPartName.setText(repoPart.getName());
         currentPartQuantity.setText("0");
         currentPartDescription.setText(repoPart.getDescription());
-        subComponentList.setListData(currentSubPartList);
+        subComponentList.setListData(repoPart.getSubCompList());
         currentPart = repoPart;
     }
 
@@ -367,7 +382,7 @@ class PartCellRenderer extends DefaultListCellRenderer {
             JList list, Object value, int index,
             boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        Part label = (Part) value;
+        PartImpl label = (PartImpl) value;
         String code = String.valueOf(label.getCode());
         String name = label.getName();
         String desc = label.getDescription();
@@ -522,7 +537,7 @@ class SubComponentCellRenderer extends DefaultListCellRenderer {
             JList list, Object value, int index,
             boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        Map.Entry<Part, Integer> label = (Map.Entry<Part, Integer>) value;
+        Map.Entry<PartImpl, Integer> label = (Map.Entry<PartImpl, Integer>) value;
         String code = label.getKey().getCode().toString();
         String name = label.getKey().getName();
         int quantity = label.getValue();

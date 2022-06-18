@@ -14,7 +14,7 @@ import java.util.Vector;
  */
 public class PartRepositoryImpl extends UnicastRemoteObject implements PartRepository {
 
-    private HashMap<UUID, PartImpl> partList;
+    private HashMap<UUID, Part> partList;
 
     public PartRepositoryImpl() throws RemoteException {
         super();
@@ -45,7 +45,18 @@ public class PartRepositoryImpl extends UnicastRemoteObject implements PartRepos
     }
 
     /**
-     * addPart: Usado para adicionar uma Part dentro do servidor
+     * addPart: Usado para adicionar uma referencia de Part dentro do servidor
+     *
+     * @param part: A part que vai ser adicionada
+     */
+    @Override
+    public void addPart(Part part) {
+        partList.put(part.getCode(), part);
+    }
+
+    /**
+     * addPart: Usado para adicionar uma Part dentro do servidor, caso a parte ja exista ele modifica o nome e a
+     * descricao da Part
      *
      * @param code: Codigo utilizado para identificar uma determinada peca
      * @param quantity: Quantidade de pecas que vao ser adicionadas
@@ -54,13 +65,30 @@ public class PartRepositoryImpl extends UnicastRemoteObject implements PartRepos
      */
     @Override
     public void addPart(UUID code, int quantity, String name, String description) throws RemoteException {
-        PartImpl part = new PartImpl(code, name, description);
-        partList.put(code, part);
+        Part novaPart = partList.get(code);
+        if (novaPart == null) {
+            novaPart = new PartImpl(code, name, description);
+            partList.put(code, novaPart);
+        } else {
+            novaPart.setName(name);
+            novaPart.setDescription(description);
+        }
     }
 
+    /**
+     * addSubCompPart: Usado para adicionar uma Part dentro dos subcomponentes de outra Part
+     *
+     * @param receive: A parte que vai receber a nova Part
+     * @param code: O codigo da nova Part
+     * @param description: A descricao da nova Part
+     * @param name: O nome da nova Part
+     * @param quantity: A quantidade que vai ser inserida
+     */
     @Override
     public void addSubCompPart(UUID receive, UUID code, int quantity, String name, String description) throws RemoteException {
         Part receivePart = partList.get(receive);
+        if (receivePart == null) return;
+
         receivePart.addSubCompPart(code, name, quantity, description);
     }
 }

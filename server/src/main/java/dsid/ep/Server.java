@@ -114,8 +114,6 @@ class ConnectPanel extends JPanel {
     }
 
     ConnectPanel(JTextArea log) throws RemoteException {
-        LocateRegistry.createRegistry(4444);
-        registry = LocateRegistry.getRegistry(4444);
 
         this.setLayout(new GridBagLayout());
 
@@ -123,6 +121,7 @@ class ConnectPanel extends JPanel {
         currentName.setText("teste");
         JTextField currentPort = new JTextField(5);
         currentPort.setText("4444");
+
         /**
          * O evendo do botao start vai:
          * 1. Verificar se os campos currentIp e currentPort estao preenchidos
@@ -174,7 +173,9 @@ class ConnectPanel extends JPanel {
                 if (serverName.isEmpty() ||
                         port.toString().isEmpty()) return;
 
-                LocateRegistry.getRegistry(port).unbind(serverName);
+
+                registry = LocateRegistry.getRegistry(port);
+                registry.unbind(serverName);
                 log.setText("Desconectado.");
             } catch(Exception ex) {
                 log.setText("Something went wrong: " + ex);

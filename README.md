@@ -1,5 +1,11 @@
 # Desenvolvimento de Sistemas Distribuídos EP 1 - RMI
 
+#### Requisitos
+
+O programa foi feito usando o Java 8
+
+#### Como rodar
+
 Para rodar um Cliente:
 
 ```sh
