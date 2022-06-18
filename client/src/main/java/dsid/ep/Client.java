@@ -3,14 +3,19 @@
  */
 package dsid.ep;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.UIManager;
 import java.awt.Dimension;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/*
- * Client: Classe principal que vai instanciar a GUI do cliente
+/**
+ * Server: Vai ser utilizada para inicializar a interface grafica do cliente
  */
 
 public class Client {
@@ -18,25 +23,22 @@ public class Client {
 
         UIManager.put("swing.boldMetal", Boolean.FALSE);
 
-        javax.swing.SwingUtilities.invokeLater( new Runnable() {
-            public void run() {
-                ClientGui gui = new ClientGui("Client Manager");
-            }
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            ClientGui gui = new ClientGui("Client Manager");
         });
     }
 }
 
-/*
+/**
  * ClientGui: Aqui onde a interface gráfica vai ser criada
  *
- * gui: a interface grafica principal
- * CONNPANEL: onde o usuario pode conectar com o repositorio
- * INFOPANEL: onde o usuario pode pesquisar pecas no repositorio
- * SHOWPANEL: onde o usuario pode ver informacoes sobre uma determinada peca e seus subcomponentes
- * MIN_WIDTH: a largura minima para que o programa funcione
- * MIN_HEIGHT: a algura minima para que o programa funcione
+ * @attr gui: A interface grafica principal
+ * @attr CONNPANEL: String da tab onde o usuario pode conectar com o repositorio
+ * @attr INFOPANEL: String da tab onde o usuario pode pesquisar pecas no repositorio
+ * @attr SHOWPANEL: String da tab onde o usuario pode ver informacoes sobre uma determinada peca e seus subcomponentes
+ * @attr MIN_WIDTH: A largura minima para que o programa funcione
+ * @attr MIN_HEIGHT: A algura minima para que o programa funcione
  */
-
 class ClientGui {
 
     private final JFrame gui;
@@ -50,35 +52,31 @@ class ClientGui {
     ClientGui(String name) {
         this.gui = new JFrame(name);
         setupFrame();
-        setupMenu();
         setupPanel();
         this.gui.setVisible(true);
     }
 
+    /**
+     * setupFrame: Vai inicializar algumas propriedades do JFrame
+     */
     private void setupFrame() {
         System.err.println("Setup Frame...");
         this.gui.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.gui.setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
     }
 
-    private void setupMenu() {
-        JMenuBar menu = new JMenuBar();
-        JMenu file = new JMenu("File");
-        JMenu help = new JMenu("Help");
-
-        JMenuItem fileItem1 = new JMenuItem("Open");
-        file.add(fileItem1);
-
-        JMenuItem helpItem1 = new JMenuItem("Save as");
-        help.add(helpItem1);
-
-        gui.getContentPane().add(BorderLayout.NORTH, menu);
-        System.err.println("Setup Menu...");
-    }
-
+    /**
+     * setupFrame: Vai inicializar a interface grafica do cliente, ela vai ser baseada em tabs
+     *
+     * @see Panel
+     */
     private void setupPanel() {
         System.err.println("Setup tabs...");
         JTabbedPane panel = new JTabbedPane();
+
+        /**
+         * O evendo do botao quit vai sair do programa
+         */
         JButton quit = new JButton("quit");
         quit.addActionListener(new ActionListener() {
             @Override
@@ -92,7 +90,6 @@ class ClientGui {
         connPanel.add(quit, BorderLayout.PAGE_END);
         connPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
         panel.addTab(CONNPANEL, connPanel);
-
 
         JPanel showPanel = new JPanel(new BorderLayout());
         showPanel.add(new ShowPanel(), BorderLayout.CENTER);

@@ -1,19 +1,38 @@
 package dsid.ep;
 
-import dsid.ep.parts.*;
+import dsid.ep.parts.Part;
+import dsid.ep.parts.PartRepository;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.rmi.Naming;
 import java.util.AbstractMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
 
-/*
- * Fields: uma classe contendo todos os campos que serao usados para pega alguma informacao do usuario.
+/**
+ * Fields: uma classe contendo todos os campos que serao usados para pegar alguma informacao do usuario
+ *  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ AARUMA
+ * @attr currentName: o nome do servidor
+ * @attr currentStatus: guarda o status do servidor (UP ou DOWN)
+ * @attr ipField: recebe o ip do servidor que vai ser conectar
+ * @attr nameField: recebe o nome do servidor que vai ser conectar
+ * @attr portField: recebe a porta do servidor que vai ser conectar
  */
-
 class Fields extends JPanel {
     static protected JTextField currentPartCode;
     static protected JTextField currentPartName;
@@ -30,28 +49,29 @@ class Fields extends JPanel {
     static protected JTextField searchField;
 }
 
-/*
- * Panel: classe geral com as informacoes basicas das 3 abas que o programa vai disponibilizar
+/**
+ * Panel: Classe geral com os metodos de comunicacao com o servidor
  *
- * repository: String onde o servidor e armazenado
- * currentPartRepository: uma instancia de PartRepositoryInerface para se comunicar com o servidor
- * currentPart: a parte que esta sendo editada atualmente
- * currentSubPartList: a atual lista de subcomponentes
+ * @attr currentPartRepository: Uma instancia de PartRepositoryInerface para se comunicar com o servidor
+ * @attr currentPart: A parte que esta sendo editada atualmente
+ * @attr currentSubPartList: A atual lista de subcomponentes
  */
-
 public class Panel extends Fields {
-    protected static String repository;
     protected static PartRepository currentPartRepository;
     protected static Part currentPart;
     protected static Vector<Map.Entry<Part, Integer>> currentSubPartList;
 
     public Panel() {
         this.currentSubPartList = new Vector<>();
-        this.repository = "rmi://127.0.0.1:4444";
-        this.currentPart = new PartImpl(UUID.randomUUID(), "None", "None");
+        this.currentPart = null; //new PartImpl(UUID.randomUUID(), "None", "None");
     }
 
-    boolean connect() {
+    /**
+     * connect: Cria uma conexao com o servidor. Se conseguir se conectar vai retornar true, se nao conseguir vai retornar false
+     *
+     * @param repository: Uma string que contem o endereco do repositorio para se conectar
+     */
+    boolean connect(String repository) {
         try {
             this.currentPartRepository = (PartRepository) Naming.lookup(repository);
         } catch (Exception ex) {
@@ -61,6 +81,14 @@ public class Panel extends Fields {
         return true;
     }
 
+    /**
+     * addp: Adiciona uma Part no repositorio atualmente conectado
+     *
+     * @param code: Usado para gerar um UUID e ser colocado no repositorio
+     * @param name: Nome da parte que vai ser adicionada no repositorio
+     * @param description: Descricao da parte que vai ser adicionada no repositorio
+     * @param quantity: Quantidade de Parts que vao ser adicionadas no repositorio
+     */
     boolean addp(String code, String name, String description, int quantity) {
         try {
             currentPartRepository.addPart(UUID.fromString(code), quantity, name, description);
@@ -69,6 +97,9 @@ public class Panel extends Fields {
         return true;
     }
 
+    /**
+     * addToGridBagConstraing: Vai colocar um determinado JComponent no GridBagConstraint
+     */
     void addToGridBagConstraint(JComponent object, int x, int y, GridBagConstraints c) {
         c.gridx = x;
         c.gridy = y;
@@ -76,16 +107,9 @@ public class Panel extends Fields {
     }
 }
 
-/*
- * ConnectPanel: classe que herda os atributos da classe Panel e mostra as informacoes necessarias para fazer uma conexao com o server
- *
- * currentName: o nome do servidor
- * currentStatus: guarda o status do servidor (UP ou DOWN)
- * ipField: recebe o ip do servidor que vai ser conectar
- * nameField: recebe o nome do servidor que vai ser conectar
- * portField: recebe a porta do servidor que vai ser conectar
+/**
+ * ConnectPanel: Vai mostrar as informacoes necessarias para o usuario fazer uma conexao com o server
  */
-
 class ConnectPanel extends Panel {
 
     public ConnectPanel() {
@@ -96,11 +120,23 @@ class ConnectPanel extends Panel {
         setButtons(c);
     }
 
+    /**
+     * setButtons: Vai adicionar os botoes para o usuario fazer a conexao
+     *
+     * @param c: Usado para organizar os JComponents nos seus devidos lugares
+     */
     public void setButtons(GridBagConstraints c) {
         c.weightx = 0;
         c.gridx = 1;
         c.gridy = 6;
 
+        /**
+         * O evendo do botao connectt vai:
+         * 1. Verificar se os campos currentIp e currentPort estao preenchidos
+         * 2. Tentar criar uma conexao com o server
+         *  2.1 Se conseguir se conectar vai mostrar as informacoes do server e mostrar UP para o usuario
+         *  2.2 Se nao conseguir se conectar, vai mostrar DOWN para o usuario
+         */
         JButton connect = new JButton("Bind");
         connect.addActionListener(e -> {
             String ip = ipField.getText().trim();
@@ -121,10 +157,10 @@ class ConnectPanel extends Panel {
                 return;
             }
 
-            repository = String.format("rmi://%s:%d/%s", ip, port, name);
+            String repository = String.format("rmi://%s:%d/%s", ip, port, name);
             currentName.setText(repository);
 
-            if (connect()) {
+            if (connect(repository)) {
                 currentStatus.setForeground(Color.GREEN);
                 currentStatus.setText("UP");
             } else {
@@ -136,6 +172,11 @@ class ConnectPanel extends Panel {
         this.add(connect, c);
     }
 
+    /**
+     * setText: Vai adicionar os textos e fields para o usuario preencher ou receber informacoes
+     *
+     * @param c: Usado para organizar os JComponents nos seus devidos lugares
+     */
     public void setText(GridBagConstraints c) {
 
         currentName = new JLabel("None");
@@ -162,7 +203,7 @@ class ConnectPanel extends Panel {
     }
 }
 
-/*
+/**
  * ShowPanel: classe que herda os atributos da classe Panel e mostra as informacoes necessarias para pesquisar as pecas dentro do servidor
  *
  * partList: mostra as pecas que foram retornadas do servidor
@@ -255,7 +296,7 @@ class PartCellRenderer extends DefaultListCellRenderer {
             JList list, Object value, int index,
             boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        PartImpl label = (PartImpl) value;
+        Part label = (Part) value;
         String code = String.valueOf(label.getCode());
         String name = label.getName();
         String desc = label.getDescription();
@@ -399,7 +440,7 @@ class SubComponentCellRenderer extends DefaultListCellRenderer {
             JList list, Object value, int index,
             boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        Map.Entry<PartImpl, Integer> label = (Map.Entry<PartImpl, Integer>) value;
+        Map.Entry<Part, Integer> label = (Map.Entry<Part, Integer>) value;
         String code = label.getKey().getCode().toString();
         String name = label.getKey().getName();
         int quantity = label.getValue();

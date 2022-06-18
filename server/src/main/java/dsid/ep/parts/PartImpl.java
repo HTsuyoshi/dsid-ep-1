@@ -6,6 +6,14 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
 
+/**
+ * PartImpl: A representacao de uma Part
+ *
+ * @attr code: O codigo que e usado como identificador unico para representar uma determinada parte
+ * @attr name: O nome de uma Part
+ * @attr description: A descricao de uma Part
+ * @attr subParts: Uma lista contendo todas as Part que compoem essa Part
+ */
 public class PartImpl implements Part, Serializable {
 
     private UUID code;

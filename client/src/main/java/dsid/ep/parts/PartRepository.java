@@ -5,6 +5,9 @@ import java.rmi.RemoteException;
 import java.util.UUID;
 import java.util.Vector;
 
+/**
+ * PartRepository: Interface que vai ser utilizada para poder manipular as Parts que estao disponivel no repositorio
+ */
 public interface PartRepository extends Remote {
     Vector<PartImpl> getPartList() throws RemoteException;
 

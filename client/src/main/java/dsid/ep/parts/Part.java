@@ -1,9 +1,13 @@
 package dsid.ep.parts;
 
+import java.io.Serializable;
 import java.util.UUID;
 import java.util.Vector;
 
-public interface Part {
+/**
+ * Part: Interface que vai ser utilizada para represenar todas as informacoes de uma Part
+ */
+public interface Part extends Serializable {
     UUID getCode();
 
     void setCode(UUID code);
