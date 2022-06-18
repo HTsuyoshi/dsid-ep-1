@@ -2,6 +2,10 @@
 
 Exercício Programa 1 de DSID feito com Java Swing e tem o objetivo de usar o `Remote Method Invocation` do Java para simular uma versão enxuta de um sistema de informaões sobre peças ou componentes (Parts).
 
+<div align="center">
+	<img src="./example.png" height="300px" />
+</div>
+
 #### Requisitos
 
 O programa foi feito usando o Java 8
